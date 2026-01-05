@@ -4,6 +4,7 @@ console.log('[Content] Bible Block v2.0 - Using background script');
 
 // Whitelist of domains where the extension should NOT run
 const WHITELISTED_DOMAINS = [
+  'chatgpt.com',
   'github.com',
   'github.io',
   'stackoverflow.com',
@@ -168,6 +169,60 @@ function isAdElement(element) {
   return false;
 }
 
+// Function to detect the main background color of the page
+function getPageBackgroundColor() {
+  // Try to get background color from body, html, or document element
+  const elements = [document.body, document.documentElement];
+  
+  for (const el of elements) {
+    if (!el) continue;
+    
+    const computedStyle = window.getComputedStyle(el);
+    const bgColor = computedStyle.backgroundColor;
+    
+    // If we got a valid color (not transparent or empty)
+    if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+      return bgColor;
+    }
+  }
+  
+  // Fallback to white if we can't detect
+  return 'rgb(255, 255, 255)';
+}
+
+// Function to determine if a color is light or dark
+function isLightColor(rgbString) {
+  // Parse RGB string like "rgb(255, 255, 255)" or "rgba(255, 255, 255, 1)"
+  const match = rgbString.match(/\d+/g);
+  if (!match || match.length < 3) return false;
+  
+  const r = parseInt(match[0]);
+  const g = parseInt(match[1]);
+  const b = parseInt(match[2]);
+  
+  // Calculate luminance (perceived brightness)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  return luminance > 0.5;
+}
+
+// Function to get appropriate text colors based on background
+function getTextColors(isLightBg) {
+  if (isLightBg) {
+    return {
+      verseText: '#1a1a1a',
+      reference: '#4a5568',
+      border: '#6b9fff'
+    };
+  } else {
+    return {
+      verseText: '#f0f0f0',
+      reference: '#a0a0a0',
+      border: '#6b9fff'
+    };
+  }
+}
+
 // Function to replace ad with Bible verse
 async function replaceAdWithVerse(element) {
   if (replacedElements.has(element)) {
@@ -176,17 +231,34 @@ async function replaceAdWithVerse(element) {
   
   const verse = await getRandomVerse();
   
+  // Detect page background color
+  const pageBgColor = getPageBackgroundColor();
+  const isLightBg = isLightColor(pageBgColor);
+  const textColors = getTextColors(isLightBg);
+  
+  // Use the detected background color, with slight adjustment for visibility
+  // Convert RGB to RGBA with slight opacity for subtle distinction
+  let bgColor = pageBgColor;
+  
+  // If it's an RGB color, convert to RGBA with slight opacity
+  if (pageBgColor.startsWith('rgb(')) {
+    bgColor = pageBgColor.replace('rgb(', 'rgba(').replace(')', ', 0.95)');
+  } else if (pageBgColor.startsWith('rgba(')) {
+    // Already RGBA, just adjust opacity
+    bgColor = pageBgColor.replace(/,\s*[\d.]+\)$/, ', 0.95)');
+  }
+  
   // Create a new div for the Bible verse
   const verseContainer = document.createElement('div');
   verseContainer.style.cssText = `
     padding: 20px;
     margin: 10px 0;
-    background-color: #1a1a1a;
-    border-left: 4px solid #6b9fff;
+    background-color: ${bgColor};
+    border-left: 4px solid ${textColors.border};
     font-family: Georgia, serif;
     font-size: 16px;
     line-height: 1.6;
-    color: #e0e0e0;
+    color: ${textColors.verseText};
     text-align: left;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -197,7 +269,7 @@ async function replaceAdWithVerse(element) {
   verseText.style.cssText = `
     margin: 0 0 10px 0;
     font-style: italic;
-    color: #f0f0f0;
+    color: ${textColors.verseText};
   `;
   
   const verseReference = document.createElement('p');
@@ -205,7 +277,7 @@ async function replaceAdWithVerse(element) {
   verseReference.style.cssText = `
     margin: 0;
     font-size: 14px;
-    color: #a0a0a0;
+    color: ${textColors.reference};
     font-weight: bold;
   `;
   
