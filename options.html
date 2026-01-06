@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Block Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚙️ Bible Block Settings</h1>
+      <p class="subtitle">Customize how Bible verses replace ads on your browser</p>
+    </header>
+
+    <main>
+      <!-- Styling Theme Section -->
+      <section class="settings-section">
+        <h2>🎨 Verse Display Style</h2>
+        <p class="section-description">Choose how Bible verses appear on websites</p>
+
+        <div class="theme-grid">
+          <label class="theme-card">
+            <input type="radio" name="theme" value="classic" checked>
+            <div class="theme-preview classic-preview">
+              <div class="preview-verse">"For God so loved the world..."</div>
+              <div class="preview-ref">— John 3:16</div>
+            </div>
+            <span class="theme-name">Classic</span>
+            <span class="theme-desc">Traditional serif font with subtle styling</span>
+          </label>
+
+          <label class="theme-card">
+            <input type="radio" name="theme" value="modern">
+            <div class="theme-preview modern-preview">
+              <div class="preview-verse">"For God so loved the world..."</div>
+              <div class="preview-ref">— John 3:16</div>
+            </div>
+            <span class="theme-name">Modern</span>
+            <span class="theme-desc">Clean sans-serif with vibrant accent</span>
+          </label>
+
+          <label class="theme-card">
+            <input type="radio" name="theme" value="minimal">
+            <div class="theme-preview minimal-preview">
+              <div class="preview-verse">"For God so loved the world..."</div>
+              <div class="preview-ref">— John 3:16</div>
+            </div>
+            <span class="theme-name">Minimal</span>
+            <span class="theme-desc">Simple and understated design</span>
+          </label>
+
+          <label class="theme-card">
+            <input type="radio" name="theme" value="bold">
+            <div class="theme-preview bold-preview">
+              <div class="preview-verse">"For God so loved the world..."</div>
+              <div class="preview-ref">— John 3:16</div>
+            </div>
+            <span class="theme-name">Bold</span>
+            <span class="theme-desc">Large text with strong emphasis</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Ad Detection Section -->
+      <section class="settings-section">
+        <h2>🎯 Ad Detection</h2>
+        <p class="section-description">Control how aggressively ads are detected</p>
+
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="detection" value="conservative">
+            <div class="radio-content">
+              <span class="radio-title">Conservative</span>
+              <span class="radio-desc">Only replace obvious ads (fewer false positives)</span>
+            </div>
+          </label>
+
+          <label class="radio-label">
+            <input type="radio" name="detection" value="balanced" checked>
+            <div class="radio-content">
+              <span class="radio-title">Balanced</span>
+              <span class="radio-desc">Default detection (recommended)</span>
+            </div>
+          </label>
+
+          <label class="radio-label">
+            <input type="radio" name="detection" value="aggressive">
+            <div class="radio-content">
+              <span class="radio-title">Aggressive</span>
+              <span class="radio-desc">Replace more elements that might be ads</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Website Whitelist Section -->
+      <section class="settings-section">
+        <h2>🌐 Website Whitelist</h2>
+        <p class="section-description">Domains where Bible Block should NOT replace ads</p>
+
+        <div class="whitelist-container">
+          <textarea
+            id="whitelist"
+            placeholder="Enter domains, one per line (e.g., example.com)"
+            rows="8"
+          ></textarea>
+          <p class="help-text">
+            💡 Tip: Add domains like "github.com" or "youtube.com" to prevent verse replacement on those sites
+          </p>
+        </div>
+      </section>
+
+      <!-- Advanced Options -->
+      <section class="settings-section">
+        <h2>⚡ Advanced Options</h2>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="replaceIframes" checked>
+          <div class="checkbox-content">
+            <span class="checkbox-title">Replace iframe ads</span>
+            <span class="checkbox-desc">Also replace ads loaded in iframes (recommended)</span>
+          </div>
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="autoBackground" checked>
+          <div class="checkbox-content">
+            <span class="checkbox-title">Auto-detect background color</span>
+            <span class="checkbox-desc">Automatically match page background (recommended)</span>
+          </div>
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="debugMode">
+          <div class="checkbox-content">
+            <span class="checkbox-title">Debug mode</span>
+            <span class="checkbox-desc">Show console logs for troubleshooting</span>
+          </div>
+        </label>
+      </section>
+
+      <!-- Save Button -->
+      <div class="save-section">
+        <button id="saveBtn" class="save-button">Save Settings</button>
+        <button id="resetBtn" class="reset-button">Reset to Defaults</button>
+        <div id="saveStatus" class="save-status"></div>
+      </div>
+    </main>
+
+    <footer>
+      <p>Bible Block v2.0 | Made with ❤️ to spread God's Word</p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

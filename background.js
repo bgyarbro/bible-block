@@ -2,7 +2,12 @@
 // This runs in the extension context, not the webpage context, so it can fetch from any URL
 // Version: 2.0
 
-console.log('[Background] Bible Block v2.0 - Service worker started');
+// Set to true for debugging, false to reduce memory usage
+const DEBUG_MODE = false;
+
+if (DEBUG_MODE) {
+  console.log('[Background] Bible Block v2.0 - Service worker started');
+}
 
 let cachedVerses = null;
 let loadingPromise = null;
@@ -22,7 +27,9 @@ async function loadBibleVerses() {
   // Start loading
   loadingPromise = (async () => {
     try {
-      console.log('[Background] Fetching KJV Bible from openbible.com...');
+      if (DEBUG_MODE) {
+        console.log('[Background] Fetching KJV Bible from openbible.com...');
+      }
       const response = await fetch('https://openbible.com/textfiles/kjv.txt');
       
       if (!response.ok) {
@@ -30,7 +37,9 @@ async function loadBibleVerses() {
       }
       
       const text = await response.text();
-      console.log(`[Background] Fetched ${text.length} characters from KJV file`);
+      if (DEBUG_MODE) {
+        console.log(`[Background] Fetched ${text.length} characters from KJV file`);
+      }
       
       // Parse the text file
       const lines = text.split('\n');
@@ -92,8 +101,10 @@ async function loadBibleVerses() {
         }
       }
       
-      console.log(`[Background] Parsed ${parsedLines} verses, skipped ${skippedLines} lines`);
-      console.log(`[Background] ✅ Successfully loaded ${verses.length} Bible verses from KJV`);
+      if (DEBUG_MODE) {
+        console.log(`[Background] Parsed ${parsedLines} verses, skipped ${skippedLines} lines`);
+        console.log(`[Background] ✅ Successfully loaded ${verses.length} Bible verses from KJV`);
+      }
       
       if (verses.length === 0) {
         throw new Error('No verses were parsed from the file');
@@ -102,7 +113,9 @@ async function loadBibleVerses() {
       cachedVerses = verses;
       return verses;
     } catch (error) {
-      console.error('[Background] ❌ Error loading Bible verses:', error);
+      if (DEBUG_MODE) {
+        console.error('[Background] ❌ Error loading Bible verses:', error);
+      }
       // Return fallback verses
       const fallback = [
         {
@@ -119,7 +132,9 @@ async function loadBibleVerses() {
         }
       ];
       cachedVerses = fallback;
-      console.log(`[Background] ⚠️ Using fallback: ${fallback.length} hardcoded verses`);
+      if (DEBUG_MODE) {
+        console.log(`[Background] ⚠️ Using fallback: ${fallback.length} hardcoded verses`);
+      }
       return fallback;
     }
   })();
@@ -129,29 +144,79 @@ async function loadBibleVerses() {
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'getRandomVerse') {
-    loadBibleVerses().then(verses => {
-      if (verses.length === 0) {
-        sendResponse({
-          text: "Loading Bible verses...",
-          reference: ""
+  try {
+    if (request.action === 'getRandomVerse') {
+      loadBibleVerses()
+        .then(verses => {
+          try {
+            if (!verses || verses.length === 0) {
+              sendResponse({
+                text: "Loading Bible verses...",
+                reference: ""
+              });
+              return;
+            }
+            const randomIndex = Math.floor(Math.random() * verses.length);
+            const verse = verses[randomIndex];
+            if (verse) {
+              if (DEBUG_MODE) {
+                console.log(`[Background] Selected random verse ${randomIndex + 1}/${verses.length}: ${verse.reference}`);
+              }
+              sendResponse(verse);
+            } else {
+              sendResponse({
+                text: "Error loading verse",
+                reference: ""
+              });
+            }
+          } catch (e) {
+            sendResponse({
+              text: "Error loading verse",
+              reference: ""
+            });
+          }
+        })
+        .catch(error => {
+          try {
+            sendResponse({
+              text: "Error loading verse",
+              reference: ""
+            });
+          } catch (e) {
+            // Response already sent or context invalid
+          }
         });
-        return;
-      }
-      const randomIndex = Math.floor(Math.random() * verses.length);
-      const verse = verses[randomIndex];
-      console.log(`[Background] Selected random verse ${randomIndex + 1}/${verses.length}: ${verse.reference}`);
-      sendResponse(verse);
-    });
-    return true; // Indicates we will send a response asynchronously
+      return true; // Indicates we will send a response asynchronously
+    }
+    
+    if (request.action === 'getAllVerses') {
+      loadBibleVerses()
+        .then(verses => {
+          try {
+            sendResponse({ verses: verses || [], count: verses ? verses.length : 0 });
+          } catch (e) {
+            sendResponse({ verses: [], count: 0 });
+          }
+        })
+        .catch(error => {
+          try {
+            sendResponse({ verses: [], count: 0 });
+          } catch (e) {
+            // Response already sent or context invalid
+          }
+        });
+      return true;
+    }
+  } catch (e) {
+    // Silently handle message listener errors
+    try {
+      sendResponse({ error: true });
+    } catch (e2) {
+      // Can't send response
+    }
   }
   
-  if (request.action === 'getAllVerses') {
-    loadBibleVerses().then(verses => {
-      sendResponse({ verses: verses, count: verses.length });
-    });
-    return true;
-  }
+  return false; // Don't keep channel open if we don't handle the message
 });
 
 // Preload verses when extension starts
